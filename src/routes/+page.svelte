@@ -107,8 +107,6 @@
         console.log('Storage engrams:', storageService.getEngrams());
     }
 
-    let myEngrams = `<strong>My Engrams: </strong> ${storageService.getEngrams().length} total`;
-
 </script>
 
 <Navbar items={navItems}>
@@ -140,7 +138,7 @@
                 Debug: Check Engrams
             </button> -->
             <p class="text-xs text-muted-foreground mt-2">
-                {@html myEngrams}
+                {@html `<strong>My Engrams: </strong> ${engrams.length} total`}
             </p>
         </div>
 
