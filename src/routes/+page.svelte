@@ -109,6 +109,11 @@
 
 </script>
 
+<svelte:head>
+    <title>Engram | Memory Management System</title>
+    <meta name="description" content="A simple local memory management system built with SvelteKit" />
+</svelte:head>
+
 <Navbar items={navItems}>
     {#snippet children()}
         <div class="flex items-center space-x-4">
