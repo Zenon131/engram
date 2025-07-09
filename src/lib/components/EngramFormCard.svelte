@@ -38,7 +38,7 @@
       <CardTitle>
         <input
           type="text"
-          placeholder="Enter card title..."
+          placeholder="Enter post title..."
           bind:value={title}
           class="w-full bg-transparent border-none text-xl font-semibold focus:outline-none focus:ring-0"
         />
@@ -47,7 +47,7 @@
     
     <CardContent>
       <textarea
-        placeholder="Enter card content..."
+        placeholder="Enter post content..."
         bind:value={content}
         class="w-full min-h-24 bg-transparent border-none resize-none focus:outline-none focus:ring-0"
       ></textarea>
@@ -58,7 +58,7 @@
         type="submit"
         class="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
       >
-        Add Card
+        Add Post
       </button>
     </CardFooter>
   </form>

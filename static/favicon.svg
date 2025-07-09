@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="80" fill="#202030" />
+  
+  <!-- Main "E" letter shape simplified -->
+  <path d="M150 120H350V180H210V230H320V280H210V330H350V390H150V120Z" fill="#f8f8ff" />
+  
+  <!-- Connection dots -->
+  <circle cx="210" cy="180" r="12" fill="#64B5F6" />
+  <circle cx="320" cy="230" r="12" fill="#64B5F6" />
+  <circle cx="210" cy="280" r="12" fill="#64B5F6" />
+  <circle cx="320" cy="330" r="12" fill="#64B5F6" />
+</svg>

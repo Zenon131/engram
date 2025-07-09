@@ -1,6 +1,7 @@
 import type { Engram } from '$lib/types/index.js';
+import { supabase } from './supabase.js';
 
-export const storageService = {
+export const localStorageService = {
     
     isAvailable: (): boolean => {
         try {
@@ -24,7 +25,7 @@ export const storageService = {
 
     getEngrams: (): Engram[] => {
         try {
-            if (!storageService.isAvailable()) {
+            if (!localStorageService.isAvailable()) {
                 return [];
             } else {
                 const storedData = localStorage.getItem('engrams');
@@ -39,7 +40,7 @@ export const storageService = {
 
     saveEngrams: (engrams: Engram[]): boolean => {
         try {
-            if (!storageService.isAvailable()) {
+            if (!localStorageService.isAvailable()) {
                 return false;
             } else {
                 localStorage.setItem('engrams', JSON.stringify(engrams));
@@ -54,7 +55,7 @@ export const storageService = {
     addEngram: (engramData: Omit<Engram, 'id' | 'createdAt'>): Engram | null => {
         try {
             // Get a fresh copy of the engrams
-            const engrams = storageService.getEngrams();
+            const engrams = localStorageService.getEngrams();
 
             // Create a new engram with a unique ID
             const newEngram: Engram = {
@@ -67,7 +68,7 @@ export const storageService = {
             const updatedEngrams = [...engrams, newEngram];
 
             // Save the updated array
-            const saved = storageService.saveEngrams(updatedEngrams);
+            const saved = localStorageService.saveEngrams(updatedEngrams);
             
             if (saved) {
                 return newEngram;
@@ -81,8 +82,62 @@ export const storageService = {
     },
 
     deleteEngram: (id: number): void => {
-        const engrams = storageService.getEngrams();
+        const engrams = localStorageService.getEngrams();
         const updatedEngrams = engrams.filter(engram => engram.id !== id);
-        storageService.saveEngrams(updatedEngrams);
+        localStorageService.saveEngrams(updatedEngrams);
     },
 };
+
+export const supabaseStorageService = {
+    async getEngrams(): Promise<Engram[]> {
+        const { data, error } = await supabase
+            .from('engrams')
+            .select('*')
+            .order('createdAt', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching engrams from Supabase:', error);
+            return [];
+        }
+
+        return data || [];
+    },
+
+    async addEngram({ title, content }: Pick<Engram, 'title' | 'content'>): Promise<Engram | null> {
+    const { data: user } = await supabase.auth.getUser();
+    
+    if (!user || !user.user) {
+      console.error('User not authenticated');
+      return null;
+    }
+    
+    const { data, error } = await supabase
+      .from('engrams')
+      .insert({ 
+        title, 
+        content,
+        user_id: user.user.id 
+      })
+      .select()
+      .single();
+      
+    if (error) {
+      console.error('Error adding engram:', error);
+      return null;
+    }
+    
+    return data;
+  },
+
+    async deleteEngram(id: string): Promise<void> {
+        const { error } = await supabase
+            .from('engrams')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            console.error('Error deleting engram:', error);
+        }
+    },
+    
+}

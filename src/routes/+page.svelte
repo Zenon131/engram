@@ -9,7 +9,7 @@
         CardContent,
         Navbar 
     } from '$lib/components/index.js';
-    import { storageService } from '$lib/services/storage.js';
+    import { localStorageService } from '$lib/services/storage.js';
     import EngramFormCard from '$lib/components/EngramFormCard.svelte';
 	import { onMount } from 'svelte';
     import type { Engram } from '$lib/types/index.js';
@@ -30,9 +30,9 @@
         console.log('Component mounted, browser environment:', browser);
         if (browser) {
             console.log('Running in browser, checking localStorage');
-            if (storageService.isAvailable()) {
+            if (localStorageService.isAvailable()) {
                 console.log('localStorage is available, loading engrams');
-                engrams = storageService.getEngrams();
+                engrams = localStorageService.getEngrams();
                 console.log('Loaded engrams from storage:', engrams);
             } else {
                 console.error('Local storage is available but not working');
@@ -52,7 +52,7 @@
         }
         
         // Check if localStorage is available
-        if (!storageService.isAvailable()) {
+        if (!localStorageService.isAvailable()) {
             console.error('Cannot add engram: localStorage not available');
             return;
         }
@@ -64,23 +64,24 @@
         }
         
         try {
-            console.log('Calling storageService.addEngram with:', { title, content });
-            // Try to add the engram
-            const newEngram = storageService.addEngram({ title, content });
+            console.log('Calling localStorageService.addEngram with:', { title, content });
+            // try to add the engram and pray to jesus that it works
+            const newEngram = localStorageService.addEngram({ title, content, user_id: 'local-user' });
             
             if (newEngram) {
                 console.log('Successfully created new engram:', newEngram);
                 
-                // Explicitly update the UI state
+                // explicitly update the UI state because Svelte 5 doesn't automatically re-render
                 const updatedEngrams = [...engrams, newEngram];
                 console.log('Created updated array:', updatedEngrams);
                 
                 engrams = updatedEngrams;
                 console.log('Assigned updated engrams array:', engrams);
                 
-                // Manual check of localStorage after update
+                // manual check of localStorage after update and pray to jesus that it worked
                 setTimeout(() => {
-                    console.log('Storage after update:', storageService.getEngrams());
+                    console.log('Manual check of localStorage after update i.e. pray to jesus:');
+                    console.log('Storage after update:', localStorageService.getEngrams());
                 }, 100);
                 
                 return newEngram;
@@ -97,20 +98,20 @@
     const deleteEngram = (id: number) => {
         console.log('Deleting engram with ID:', id);
         engrams = engrams.filter(engram => engram.id !== id);
-        storageService.deleteEngram(id);
+        localStorageService.deleteEngram(id);
         console.log('After deletion, engrams:', engrams);
     };
 
-    // Debug function to manually check if engrams are being added
+    // debug function to manually check if engrams are being added
     function checkEngrams() {
         console.log('Current engrams:', engrams);
-        console.log('Storage engrams:', storageService.getEngrams());
+        console.log('Storage engrams:', localStorageService.getEngrams());
     }
 
 </script>
 
 <svelte:head>
-    <title>Engram | Memory Management System</title>
+    <title>Bulletin</title>
     <meta name="description" content="A simple local memory management system built with SvelteKit" />
 </svelte:head>
 
@@ -125,9 +126,9 @@
 <main class="container mx-auto px-4 py-8 mt-16">
     <div class="max-w-4xl mx-auto">
         <div class="text-center mb-12">
-            <h1 class="text-4xl font-bold tracking-tight text-foreground mb-4">Welcome to Engram</h1>
+            <h1 class="text-4xl font-bold tracking-tight text-foreground mb-4">Welcome to Bulletin!</h1>
             <p class="text-xl text-muted-foreground mb-8">
-                A simple local memory management system built with SvelteKit
+                Post your memories and share them with the community!
             </p>
         </div>
 
@@ -143,7 +144,7 @@
                 Debug: Check Engrams
             </button> -->
             <p class="text-xs text-muted-foreground mt-2">
-                {@html `<strong>My Engrams: </strong> ${engrams.length} total`}
+                {@html `<strong>My Posts: </strong> ${engrams.length} total`}
             </p>
         </div>
 

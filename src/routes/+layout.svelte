@@ -5,7 +5,7 @@
 	let { children, data } = $props();
 	
 	// Default title that can be overridden by individual pages
-	let title = 'Engram | Memory Management System';
+	let title = 'Bulletin';
 </script>
 
 <svelte:head>

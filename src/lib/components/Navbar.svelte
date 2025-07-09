@@ -11,15 +11,17 @@
 		class?: string;
 		brand?: string;
 		brandHref?: string;
+		imgSrc?: string;
 		items?: NavItem[];
 		children?: import('svelte').Snippet;
 	}
 
 	let { 
 		class: className, 
-		brand = 'Engram',
+		brand = 'Bulletin',
 		brandHref = '/',
 		items = [],
+		imgSrc = 'bulletin logo.svg',
 		children,
 		...restProps 
 	}: Props = $props();
@@ -40,10 +42,13 @@
 		<div class="flex h-16 justify-between">
 			<div class="flex">
 				<!-- Brand/Logo -->
-				<div class="flex flex-shrink-0 items-center">
-					<h1 class="text-xl font-bold text-[hsl(var(--foreground))] hover:text-primary transition-colors">
-						{brand}
-                    </h1>
+				<div class="flex flex-shrink-0 items-center gap-2">
+					<a href={brandHref} class="flex items-center gap-3 group">
+						<img src={imgSrc} alt="Bulletin Logo" class="h-8 w-auto" />
+						<h1 class="text-xl font-bold text-[hsl(var(--foreground))] group-hover:text-primary transition-colors">
+							{brand}
+						</h1>
+					</a>
 				</div>
 
 				<!-- Desktop Navigation -->

@@ -1,4 +1,4 @@
-# Engram
+# Bulletin
 
 ## About
 Engram will just be a simple note keeping app similar to Google Keep
