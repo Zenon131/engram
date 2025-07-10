@@ -9,5 +9,8 @@ export { default as CardFooter } from './CardFooter.svelte';
 // Navigation Components
 export { default as Navbar } from './Navbar.svelte';
 
+// Interaction Components
+export { default as VoteControls } from './VoteControls.svelte';
+
 // Types
 export type { CardProps } from './card-variants.js';

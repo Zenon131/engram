@@ -52,8 +52,7 @@ A simple, anonymous social bulletin board where users can post thoughts to share
 4. Set up Supabase
    - Create a new project in Supabase
    - Use the SQL in `supabase-setup.sql` to create the necessary tables and policies
-   - Update the environment variables with your Supabase project URL and public anon key
-   - No authentication is required, the app uses device IDs stored in localStorage
+   - Update the environment variables with your Supabase project URL and anon key
 
 5. Run the development server
 
@@ -70,7 +69,7 @@ A simple, anonymous social bulletin board where users can post thoughts to share
 - `id`: BIGINT (Primary Key)
 - `title`: TEXT
 - `content`: TEXT
-- `device_id`: TEXT (Anonymous identifier)
+- `user_id`: UUID (References auth.users)
 - `cluster`: TEXT
 - `upvotes`: INTEGER
 - `downvotes`: INTEGER
@@ -80,14 +79,14 @@ A simple, anonymous social bulletin board where users can post thoughts to share
 
 - `id`: BIGINT (Primary Key)
 - `engram_id`: BIGINT (References engrams)
-- `device_id`: TEXT (Anonymous identifier)
+- `user_id`: UUID (References auth.users)
 - `vote_type`: TEXT ('up' or 'down')
 - `created_at`: TIMESTAMP WITH TIME ZONE
 
-## Anonymous Usage
+## Authentication
 
-The app is completely anonymous with no authentication required:
-- Anyone can create, view, update, and delete posts
-- All users can vote (using a device ID stored in localStorage)
-- Each device can only vote once per engram
-- Row Level Security (RLS) is set up to allow full anonymous access
+The app supports both authenticated and anonymous posting:
+- Authenticated users can create, edit, and delete their own posts
+- All users can read posts
+- Voting requires authentication
+- Row Level Security (RLS) is set up to enforce these permissions

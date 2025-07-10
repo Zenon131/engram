@@ -7,105 +7,193 @@
         CardTitle, 
         CardDescription, 
         CardContent,
-        Navbar 
+        Navbar,
+        VoteControls
     } from '$lib/components/index.js';
     import { localStorageService } from '$lib/services/storage.js';
+    import { supabaseService } from '$lib/services/supabaseService.js';
     import EngramFormCard from '$lib/components/EngramFormCard.svelte';
 	import { onMount } from 'svelte';
     import type { Engram } from '$lib/types/index.js';
 
+    // Import browser check from SvelteKit
+    import { browser } from '$app/environment';
+    
+    // Function to get or create a device ID for anonymous use
+    function getDeviceId(): string {
+        if (!browser) return 'server';
+        
+        let deviceId = localStorage.getItem('bulletin_device_id');
+        
+        if (!deviceId) {
+            deviceId = 'device_' + Math.random().toString(36).substring(2, 15) + 
+                    Math.random().toString(36).substring(2, 15);
+            localStorage.setItem('bulletin_device_id', deviceId);
+        }
+        
+        return deviceId;
+    }
 
-    const navItems = [
+    const navItems: { href: string; label: string; active: boolean; }[] = [
         // { href: '/', label: 'Home', active: true },
         // { href: '/about', label: 'About', active: false }
     ];
 
-    // Import browser check from SvelteKit
-    import { browser } from '$app/environment';
-    
     // Sample engram data
     let engrams = $state<Engram[]>([]);
 
-    onMount(() => {
-        console.log('Component mounted, browser environment:', browser);
-        if (browser) {
-            console.log('Running in browser, checking localStorage');
-            if (localStorageService.isAvailable()) {
-                console.log('localStorage is available, loading engrams');
+    // Track loading state
+    let loading = $state(true);
+    let selectedCluster = $state('all');
+    
+    // Fetch engrams from Supabase
+    async function fetchEngrams(cluster = selectedCluster) {
+        loading = true;
+        try {
+            const data = await supabaseService.getEngrams(cluster === 'all' ? undefined : cluster);
+            console.log('Fetched engrams from Supabase:', data);
+            engrams = data;
+        } catch (error) {
+            console.error('Error fetching engrams:', error);
+            // Fallback to localStorage if Supabase fails
+            if (browser && localStorageService.isAvailable()) {
                 engrams = localStorageService.getEngrams();
-                console.log('Loaded engrams from storage:', engrams);
-            } else {
-                console.error('Local storage is available but not working');
+                console.log('Fallback: loaded engrams from localStorage:', engrams);
             }
-        } else {
-            console.log('Running on server, skipping localStorage operations');
+        } finally {
+            loading = false;
         }
+    }
+
+    onMount(async () => {
+        console.log('Component mounted, browser environment:', browser);
+        await fetchEngrams();
     })
 
-    const addNewEngram = (title: string, content: string) => {
-        console.log('🚀 addNewEngram called with:', title, content);
-        
-        // Check if we're in a browser environment
-        if (!browser) {
-            console.error('Cannot add engram: not in browser environment');
-            return;
-        }
-        
-        // Check if localStorage is available
-        if (!localStorageService.isAvailable()) {
-            console.error('Cannot add engram: localStorage not available');
-            return;
-        }
+    const addNewEngram = async (title: string, content: string, cluster: string = 'general') => {
+        console.log('🚀 addNewEngram called with:', title, content, cluster);
         
         // Validate input
         if (!title || !content) {
             console.error('Cannot add engram: missing title or content');
-            return;
+            return null;
         }
         
         try {
-            console.log('Calling localStorageService.addEngram with:', { title, content });
-            // try to add the engram and pray to jesus that it works
-            const newEngram = localStorageService.addEngram({ title, content, user_id: 'local-user' });
+            console.log('Adding engram to Supabase:', { title, content, cluster });
+            
+            // Add the engram to Supabase
+            const newEngram = await supabaseService.addEngram({ 
+                title, 
+                content, 
+                cluster 
+            });
             
             if (newEngram) {
                 console.log('Successfully created new engram:', newEngram);
                 
-                // explicitly update the UI state because Svelte 5 doesn't automatically re-render
-                const updatedEngrams = [...engrams, newEngram];
-                console.log('Created updated array:', updatedEngrams);
-                
-                engrams = updatedEngrams;
-                console.log('Assigned updated engrams array:', engrams);
-                
-                // manual check of localStorage after update and pray to jesus that it worked
-                setTimeout(() => {
-                    console.log('Manual check of localStorage after update i.e. pray to jesus:');
-                    console.log('Storage after update:', localStorageService.getEngrams());
-                }, 100);
+                // Refresh the engrams from the server to ensure we have the latest data
+                await fetchEngrams();
                 
                 return newEngram;
             } else {
-                console.error('Failed to add new engram: storage service returned null');
+                console.error('Failed to add engram to Supabase');
                 return null;
             }
         } catch (error) {
             console.error('Error in addNewEngram:', error);
+            
+            // Fallback to localStorage if Supabase fails
+            if (browser && localStorageService.isAvailable()) {
+                const newEngram = localStorageService.addEngram({ 
+                    title, 
+                    content, 
+                    device_id: getDeviceId(),
+                    cluster 
+                });
+                
+                if (newEngram) {
+                    console.log('Fallback: added engram to localStorage:', newEngram);
+                    engrams = [...engrams, newEngram];
+                    return newEngram;
+                }
+            }
+            
             return null;
         }
     };
 
-    const deleteEngram = (id: number) => {
+    const deleteEngram = async (id: number) => {
         console.log('Deleting engram with ID:', id);
-        engrams = engrams.filter(engram => engram.id !== id);
-        localStorageService.deleteEngram(id);
-        console.log('After deletion, engrams:', engrams);
+        
+        try {
+            const success = await supabaseService.deleteEngram(id);
+            
+            if (success) {
+                console.log('Successfully deleted engram from Supabase');
+                // Refresh engrams from the server
+                await fetchEngrams();
+            } else {
+                console.error('Failed to delete engram from Supabase');
+                // Remove from local state as fallback
+                engrams = engrams.filter(engram => engram.id !== id);
+            }
+        } catch (error) {
+            console.error('Error deleting engram:', error);
+            
+            // Fallback to localStorage
+            if (browser && localStorageService.isAvailable()) {
+                localStorageService.deleteEngram(id);
+                engrams = engrams.filter(engram => engram.id !== id);
+                console.log('Fallback: deleted engram from localStorage');
+            }
+        }
     };
 
     // debug function to manually check if engrams are being added
     function checkEngrams() {
         console.log('Current engrams:', engrams);
         console.log('Storage engrams:', localStorageService.getEngrams());
+    }
+
+    // Handle voting on an engram
+    async function handleVote(id: number, direction: 'up' | 'down') {
+        console.log(`Voting ${direction} on engram ${id}`);
+        
+        try {
+            const updatedEngram = await supabaseService.voteEngram(id, direction);
+            
+            if (updatedEngram) {
+                console.log('Successfully voted on engram:', updatedEngram);
+                
+                // Update the engram in the UI
+                engrams = engrams.map(engram => 
+                    engram.id === id ? updatedEngram : engram
+                );
+            } else {
+                console.error('Failed to vote on engram');
+            }
+        } catch (error) {
+            console.error('Error voting on engram:', error);
+            
+            // Fallback to localStorage
+            if (browser && localStorageService.isAvailable()) {
+                try {
+                    const updatedEngram = localStorageService.voteEngram(id, direction);
+                    
+                    if (updatedEngram) {
+                        console.log('Fallback: voted on engram in localStorage:', updatedEngram);
+                        
+                        // Update the engram in the UI
+                        engrams = engrams.map(engram => 
+                            engram.id === id ? updatedEngram : engram
+                        );
+                    }
+                } catch (localError) {
+                    console.error('Error voting on engram in localStorage:', localError);
+                }
+            }
+        }
     }
 
 </script>
@@ -135,17 +223,40 @@
         <!-- Engram Form Card -->
         <EngramFormCard onSubmit={addNewEngram} class="mb-12" />
         
-        <!-- Debug button (remove in production) -->
-        <div class="text-center mb-6">
-            <!-- <button 
-                onclick={checkEngrams}
-                class="px-4 py-2 text-sm border rounded hover:bg-accent text-muted-foreground"
-            >
-                Debug: Check Engrams
-            </button> -->
-            <p class="text-xs text-muted-foreground mt-2">
-                {@html `<strong>My Posts: </strong> ${engrams.length} total`}
-            </p>
+        <!-- Cluster filter and post count -->
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center space-x-2">
+                <label for="cluster-filter" class="text-sm text-muted-foreground">Filter by category:</label>
+                <div class="relative inline-block">
+                    <div class="flex items-center">
+                        <span class="mr-1">{selectedCluster === 'all' ? 'All Categories' : selectedCluster === 'general' ? 'General' : 'UPenn'}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-muted-foreground" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <select 
+                        id="cluster-filter" 
+                        bind:value={selectedCluster}
+                        onchange={() => fetchEngrams(selectedCluster)}
+                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        aria-label="Filter by category"
+                    >
+                        <option value="all">All Categories</option>
+                        <option value="general">General</option>
+                        <option value="upenn">UPenn</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="flex items-center">
+                {#if loading}
+                    <div class="text-xs text-muted-foreground">Loading posts...</div>
+                {:else}
+                    <p class="text-xs text-muted-foreground">
+                        {@html `<strong>Posts: </strong> ${engrams.length} total`}
+                    </p>
+                {/if}
+            </div>
         </div>
 
         <!-- Card Examples -->
@@ -172,16 +283,25 @@
                         </CardContent>
                         <CardFooter>
                             {#snippet children()}
-                                <div class="flex justify-between w-full">
-                                    <p class="text-sm text-muted-foreground">
-                                        {new Date(engram.createdAt).toLocaleDateString()}
-                                    </p>
-                                    <button 
-                                        class="text-xs text-destructive hover:underline"
-                                        onclick={() => deleteEngram(engram.id)}
-                                    >
-                                        Addressed
-                                    </button>
+                                <div class="flex justify-between w-full items-center">
+                                    <VoteControls 
+                                        upvotes={engram.upvotes} 
+                                        downvotes={engram.downvotes}
+                                        userVote={engram.userVote}
+                                        onVote={(direction) => handleVote(engram.id, direction)}
+                                    />
+                                    
+                                    <div class="flex items-center gap-2">
+                                        <p class="text-xs text-muted-foreground">
+                                            {new Date(engram.createdAt).toLocaleDateString()}
+                                        </p>
+                                        <!-- <button 
+                                            class="text-xs text-destructive hover:underline"
+                                            onclick={() => deleteEngram(engram.id)}
+                                        >
+                                            Addressed
+                                        </button> -->
+                                    </div>
                                 </div>
                             {/snippet}
                         </CardFooter>
