@@ -64,23 +64,22 @@
     <CardFooter class="flex justify-between items-center">
       <div class="flex items-center gap-2">
         <label for="cluster" class="text-sm text-muted-foreground">Category:</label>
-        <div class="relative inline-block">
-          <div class="flex items-center">
-            <span class="mr-1">{clusters.find(c => c.id === cluster)?.name || 'General'}</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-muted-foreground" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-            </svg>
-          </div>
+        <div class="relative">
           <select 
             id="cluster" 
             bind:value={cluster}
-            class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            aria-label="Select category"
+            class="appearance-none bg-transparent text-sm pr-8 pl-0 py-1 focus:outline-none focus:ring-0 border-none"
+            style="-webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important; background-image: none !important;"
           >
             {#each clusters as clusterOption}
               <option value={clusterOption.id}>{clusterOption.name}</option>
             {/each}
           </select>
+          <div class="absolute inset-y-0 right-0 flex items-center pointer-events-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-muted-foreground" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </div>
         </div>
       </div>
       

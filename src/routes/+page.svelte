@@ -23,15 +23,20 @@
     function getDeviceId(): string {
         if (!browser) return 'server';
         
-        let deviceId = localStorage.getItem('bulletin_device_id');
-        
-        if (!deviceId) {
-            deviceId = 'device_' + Math.random().toString(36).substring(2, 15) + 
-                    Math.random().toString(36).substring(2, 15);
-            localStorage.setItem('bulletin_device_id', deviceId);
+        try {
+            let deviceId = localStorage.getItem('bulletin_device_id');
+            
+            if (!deviceId) {
+                deviceId = 'device_' + Math.random().toString(36).substring(2, 15) + 
+                        Math.random().toString(36).substring(2, 15);
+                localStorage.setItem('bulletin_device_id', deviceId);
+            }
+            
+            return deviceId;
+        } catch (error) {
+            // Fallback if localStorage is not available
+            return 'server_' + Math.random().toString(36).substring(2, 15);
         }
-        
-        return deviceId;
     }
 
     const navItems: { href: string; label: string; active: boolean; }[] = [
@@ -201,6 +206,20 @@
 <svelte:head>
     <title>Bulletin</title>
     <meta name="description" content="A simple local memory management system built with SvelteKit" />
+    <style>
+        /* Hide default dropdown arrows in all browsers */
+        select {
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            appearance: none !important;
+            text-indent: 1px !important;
+            text-overflow: '' !important;
+            background-image: none !important;
+        }
+        select::-ms-expand {
+            display: none !important;
+        }
+    </style>
 </svelte:head>
 
 <Navbar items={navItems}>
@@ -226,25 +245,24 @@
         <!-- Cluster filter and post count -->
         <div class="flex justify-between items-center mb-6">
             <div class="flex items-center space-x-2">
-                <label for="cluster-filter" class="text-sm text-muted-foreground">Filter by category:</label>
-                <div class="relative inline-block">
-                    <div class="flex items-center">
-                        <span class="mr-1">{selectedCluster === 'all' ? 'All Categories' : selectedCluster === 'general' ? 'General' : 'UPenn'}</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-muted-foreground" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                        </svg>
-                    </div>
+                <label for="cluster-filter" class="text-sm text-muted-foreground">Feed:</label>
+                <div class="relative">
                     <select 
                         id="cluster-filter" 
                         bind:value={selectedCluster}
                         onchange={() => fetchEngrams(selectedCluster)}
-                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                        aria-label="Filter by category"
+                        class="appearance-none bg-transparent text-sm pr-8 pl-0 py-1 focus:outline-none focus:ring-0 border-none"
+                        style="-webkit-appearance: none !important; -moz-appearance: none !important; appearance: none !important; background-image: none !important;"
                     >
                         <option value="all">All Categories</option>
                         <option value="general">General</option>
                         <option value="upenn">UPenn</option>
                     </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center pointer-events-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-muted-foreground" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
                 </div>
             </div>
             
