@@ -44,6 +44,8 @@
         // { href: '/about', label: 'About', active: false }
     ];
 
+    let themeOfTheWeek = $state('Hot (Like Summer) Takes');
+
     // Sample engram data
     let engrams = $state<Engram[]>([]);
 
@@ -234,8 +236,9 @@
     <div class="max-w-4xl mx-auto">
         <div class="text-center mb-12">
             <h1 class="text-4xl font-bold tracking-tight text-foreground mb-4">Welcome to Bulletin!</h1>
+            <h2 class="text-2xl text-muted-foreground mb-2">Theme of the week: <strong>{themeOfTheWeek}</strong></h2>
             <p class="text-xl text-muted-foreground mb-8">
-                Post your memories and share them with the community!
+                Write your thoughts and share them with the community!
             </p>
         </div>
 
