@@ -10,7 +10,7 @@
 
 <svelte:head>
 	<title>{title}</title>
-	<meta name="description" content="A simple local memory management system built with SvelteKit" />
+	<meta name="description" content="Share your thoughts with the community!" />
 </svelte:head>
 
 {@render children()}

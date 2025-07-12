@@ -207,7 +207,7 @@
 
 <svelte:head>
     <title>Bulletin</title>
-    <meta name="description" content="A simple local memory management system built with SvelteKit" />
+    <meta name="description" content="Share your thoughts with the community!" />
     <style>
         /* Hide default dropdown arrows in all browsers */
         select {
